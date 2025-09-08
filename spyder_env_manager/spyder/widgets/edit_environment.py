@@ -59,17 +59,20 @@ class EditEnvironment(SpyderConfigPage, SpyderFontsMixin):
     sig_packages_changed = Signal(bool)
     sig_packages_loaded = Signal()
 
-    def __init__(self, parent):
+    def __init__(self, parent, show_in_remote_connections_dialog=False):
         super().__init__(parent)
+        self._show_in_remote_connections_dialog = show_in_remote_connections_dialog
 
+        package_name_width = 300 if show_in_remote_connections_dialog else 400  # FIXME!
         self._packages_to_change: list[PackageInfo] = []
 
-        title_font = self.get_font(SpyderFontType.Interface)
-        title_font.setPointSize(title_font.pointSize() + 2)
+        if not show_in_remote_connections_dialog:
+            title_font = self.get_font(SpyderFontType.Interface)
+            title_font.setPointSize(title_font.pointSize() + 2)
 
-        self.title = QLabel("")
-        self.title.setFont(title_font)
-        self.title.setAlignment(Qt.AlignCenter)
+            self.title = QLabel("")
+            self.title.setFont(title_font)
+            self.title.setAlignment(Qt.AlignCenter)
 
         big_font = self.get_font(SpyderFontType.Interface)
         big_font.setPointSize(big_font.pointSize() + 1)
@@ -101,7 +104,7 @@ class EditEnvironment(SpyderConfigPage, SpyderFontsMixin):
                 "or matplotlib"
             ),
         )
-        self._package_name.textbox.setMinimumWidth(400)
+        self._package_name.textbox.setMinimumWidth(package_name_width)
 
         self._package_version = self.create_lineedit(
             text=_("Version"),
@@ -134,7 +137,9 @@ class EditEnvironment(SpyderConfigPage, SpyderFontsMixin):
         packages_table_header = QLabel(_("Packages to install"))
         packages_table_header.setObjectName("packages-table-header")
 
-        self._packages_table = EnvironmentPackagesTable(self, name_column_width=400)
+        self._packages_table = EnvironmentPackagesTable(
+            self, name_column_width=package_name_width
+        )
         self._packages_table.setObjectName("packages-table")
         self._empty_message = PackagesTableEmptyMessage(self)
 
@@ -144,19 +149,23 @@ class EditEnvironment(SpyderConfigPage, SpyderFontsMixin):
 
         layout = QVBoxLayout()
         layout.setSpacing(0)
-        layout.setContentsMargins(  # FIXME!
-            # There are some pixels by default on the right side. Don't know where they
-            # come from and can't get rid of them. But with the ones added below we
-            # have almost the same as in the left side.
-            7 * AppStyle.MarginSize,
-            5 * AppStyle.MarginSize,
-            0,
-            # The bottom margin is set by the dialog
-            0,
-        )
+        if not self._show_in_remote_connections_dialog:
+            layout.setContentsMargins(  # FIXME!
+                # There are some pixels by default on the right side. Don't know where
+                # they come from and can't get rid of them. But with the ones added
+                # below we have almost the same as in the left side.
+                7 * AppStyle.MarginSize,
+                5 * AppStyle.MarginSize,
+                0,
+                # The bottom margin is set by the dialog
+                0,
+            )
 
-        layout.addWidget(self.title)
-        layout.addSpacing(3 * AppStyle.MarginSize)
+            layout.addWidget(self.title)
+            layout.addSpacing(3 * AppStyle.MarginSize)
+        else:
+            layout.setContentsMargins(0, 0, 0, 0)
+
         layout.addLayout(first_line_layout)
         layout.addSpacing(-AppStyle.MarginSize)
         layout.addLayout(second_line_layout)
@@ -185,7 +194,8 @@ class EditEnvironment(SpyderConfigPage, SpyderFontsMixin):
             action = _("Creating environment")
             self.env_directory.setText("")
 
-        self.title.setText(action)
+        if not self._show_in_remote_connections_dialog:
+            self.title.setText(action)
 
     def get_changed_packages(self):
         packages_to_change = []
