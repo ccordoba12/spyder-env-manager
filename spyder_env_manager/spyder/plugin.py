@@ -124,6 +124,7 @@ class SpyderEnvManager(SpyderPluginV2):
     @on_plugin_available(plugin=Plugins.RemoteClient)
     def on_remoteclient_available(self):
         self._remote_client.sig_import_env_requested.connect(self.import_remote_env)
+        self._remote_client.sig_create_env_requested.connect(self.create_remote_env)
 
     @cached_property
     def _remote_client(self):
@@ -152,12 +153,25 @@ class SpyderEnvManager(SpyderPluginV2):
     @on_plugin_teardown(plugin=Plugins.RemoteClient)
     def on_remoteclient_teardown(self):
         self._remote_client.sig_import_env_requested.disconnect(self.import_remote_env)
+        self._remote_client.sig_create_env_requested.disconnect(self.create_remote_env)
 
     def on_close(self, cancellable=True):
         return True
 
     # --- Public API
     # ------------------------------------------------------------------------
+    def create_remote_env(
+        self, server_id: str, env_name: str, python_version: str, packages: list[str]
+    ):
+        container = self.get_container()
+        container.envs_manager._run_action_for_env(
+            action=SpyderEnvManagerWidgetActions.NewEnvironment,
+            env_name=env_name,
+            python_version=python_version,
+            packages=packages,
+            server_id=server_id,
+        )
+
     def import_remote_env(self, server_id: str, import_file_path: str, env_name: str):
         # Get binary file contents
         with open(import_file_path, "rb") as file:

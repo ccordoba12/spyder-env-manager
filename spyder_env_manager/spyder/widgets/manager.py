@@ -549,7 +549,11 @@ class SpyderEnvManagerWidget(PluginMainWidget):
         )
 
     def _add_new_environment_entry(
-        self, action_result: bool, result_message: str, manager_options: ManagerOptions
+        self,
+        action_result: bool,
+        result_message: str,
+        manager_options: ManagerOptions,
+        server_id: str | None = None,
     ):
         """
         Handle the addition of a new Python environment to the GUI.
@@ -567,16 +571,34 @@ class SpyderEnvManagerWidget(PluginMainWidget):
             Options used to create the manager.
         """
         if action_result:
-            env_name = manager_options["env_name"]
-            env_directory = manager_options["env_directory"]
+            if server_id is None:
+                env_name = manager_options["env_name"]
+                env_directory = manager_options["env_directory"]
 
-            self.current_environment_changed(env_name, env_directory)
-            self.list_envs_widget.add_environment(env_name, env_directory)
-            self._allow_default_as_env_name()
-            self.set_conf("selected_environment", env_name)
-            self.envs_available = True
+                self.current_environment_changed(env_name, env_directory)
+                self.list_envs_widget.add_environment(env_name, env_directory)
+                self._allow_default_as_env_name()
+                self.set_conf("selected_environment", env_name)
+                self.envs_available = True
+            else:
+                # Install kernel spec
+                request = ManagerRequest(
+                    manager_options=ManagerOptions(
+                        backend=manager_options["backend"],
+                        env_name=manager_options["env_name"],
+                    ),
+                    action=ManagerActions.CreateKernelSpec,
+                    action_options=dict(
+                        name=manager_options["env_name"],
+                    ),
+                )
+
+                self._run_env_manager_action(
+                    request, self._after_kernel_spec_created, server_id
+                )
         else:
             self._message_error_box(result_message)
+
         self.stop_spinner()
 
     def _after_list_environments(
