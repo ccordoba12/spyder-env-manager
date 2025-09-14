@@ -124,8 +124,8 @@ class ListEnvironments(QWidget, SpyderFontsMixin):
         super().__init__(parent)
 
         # To hold a reference to the available envs. The mapping is
-        # env_name -> env_directory
-        self._envs: dict[str, str] = {}
+        # server_id: env_name -> env_directory
+        self._envs: dict[str | None, dict[str, str]] = {}
 
         title_font = self.get_font(SpyderFontType.Interface)
         title_font.setPointSize(title_font.pointSize() + 2)
@@ -159,28 +159,37 @@ class ListEnvironments(QWidget, SpyderFontsMixin):
         self.setStyleSheet(self._stylesheet)
 
     # ---- Public API
-    # -------------------------------------------------------------------------
-    def setup_environments(self, envs: dict[str, str]):
-        self._envs = envs
+    # ----------------------------------------------------------------------------------
+    def setup_environments(self, envs: dict[str, str], server_id: str | None):
+        if not self._envs.get(server_id):
+            self._envs[server_id] = {}
+
+        self._envs[server_id] = envs
         self._table.setup_envs(envs)
 
-    def get_environments(self):
-        return self._envs
+    def get_environments(self, server_id: str | None = None):
+        if not self._envs.get(server_id):
+            self._envs[server_id] = {}
 
-    def add_environment(self, env_name: str, env_directory: str):
-        self._envs[env_name] = env_directory
-        self._table.setup_envs(self._envs)
+        return self._envs[server_id]
 
-    def delete_environment(self, env_name: str):
-        self._envs.pop(env_name)
-        self._table.setup_envs(self._envs)
+    def add_environment(self, env_name: str, env_directory: str, server_id: str | None):
+        if not self._envs.get(server_id, None):
+            self._envs[server_id] = {}
 
-    def set_enabled(self, state: bool):
+        self._envs[server_id][env_name] = env_directory
+        self._table.setup_envs(self._envs[server_id])
+
+    def delete_environment(self, env_name: str, server_id: str | None = None):
+        self._envs[server_id].pop(env_name)
+        self._table.setup_envs(self._envs[server_id])
+
+    def set_enabled(self, state: bool, server_id: str | None = None):
         self._finder.setEnabled(state)
-        self._table.setup_envs(self._envs, enabled=state)
+        self._table.setup_envs(self._envs[server_id], enabled=state)
 
     # ---- Private API
-    # -------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------
     def _do_find(self, text):
         self._table.do_find(text)
 

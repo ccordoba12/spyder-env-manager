@@ -281,7 +281,7 @@ def test_environment_creation_and_deletion(env_manager_dialog, qtbot, caplog):
     assert not manager._spinner._isSpinning
     assert manager.list_envs_widget._table.isEnabled()
     assert manager.list_envs_widget._finder.isEnabled()
-    assert len(manager.list_envs_widget._envs) == 0
+    assert manager.list_envs_widget._envs == {None: {}}
     assert dialog._button_next.isVisible()
     assert dialog._button_cancel.text() == "Cancel"
 

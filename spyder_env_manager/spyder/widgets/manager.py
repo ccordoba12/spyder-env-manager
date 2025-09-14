@@ -415,8 +415,8 @@ class SpyderEnvManagerWidget(PluginMainWidget):
         )
 
     # ---- Private API
-    # ------------------------------------------------------------------------
-    def _list_environments(self):
+    # ----------------------------------------------------------------------------------
+    def _list_environments(self, server_id: str | None = None):
         request = ManagerRequest(
             manager_options=ManagerOptions(
                 backend=PixiInterface.ID,
@@ -424,7 +424,7 @@ class SpyderEnvManagerWidget(PluginMainWidget):
             action=ManagerActions.ListEnvironments,
         )
 
-        self._run_env_manager_action(request, self._after_list_environments)
+        self._run_env_manager_action(request, self._after_list_environments, server_id)
 
     def _install_spyder_kernels(self, manager_options: ManagerOptions):
         packages = [f"spyder-kernels{SPYDER_KERNELS_VERSION}"]
@@ -571,12 +571,12 @@ class SpyderEnvManagerWidget(PluginMainWidget):
             Options used to create the manager.
         """
         if action_result:
-            if server_id is None:
-                env_name = manager_options["env_name"]
-                env_directory = manager_options["env_directory"]
+            env_name = manager_options["env_name"]
+            env_directory = manager_options["env_directory"]
+            self.list_envs_widget.add_environment(env_name, env_directory, server_id)
 
+            if server_id is None:
                 self.current_environment_changed(env_name, env_directory)
-                self.list_envs_widget.add_environment(env_name, env_directory)
                 self._allow_default_as_env_name()
                 self.set_conf("selected_environment", env_name)
                 self.envs_available = True
@@ -602,7 +602,11 @@ class SpyderEnvManagerWidget(PluginMainWidget):
         self.stop_spinner()
 
     def _after_list_environments(
-        self, action_result: bool, result_message: str, manager_options: ManagerOptions
+        self,
+        action_result: bool,
+        result_message: str,
+        manager_options: ManagerOptions,
+        server_id: str | None = None,
     ):
         # This function must be called only once, at startup. So, we use this variable
         # to prevent running it more times, which happens in our tests for some reason.
@@ -618,7 +622,7 @@ class SpyderEnvManagerWidget(PluginMainWidget):
             self.envs_available = False
             self.show_new_env_widget()
         else:
-            self.list_envs_widget.setup_environments(envs)
+            self.list_envs_widget.setup_environments(envs, server_id)
             self.show_list_envs_widget()
             self.envs_available = True
 
@@ -648,13 +652,13 @@ class SpyderEnvManagerWidget(PluginMainWidget):
         """
         if action_result:
             # TODO: Make most of the calls below work for remote envs too.
-            if server_id is None:
-                # Add new imported environment entry
-                self._add_new_environment_entry(
-                    action_result, result_message, manager_options
-                )
-                self.show_list_envs_widget()
+            # Add new imported environment entry
+            self._add_new_environment_entry(
+                action_result, result_message, manager_options, server_id
+            )
 
+            if server_id is None:
+                self.show_list_envs_widget()
                 self._allow_default_as_env_name()
 
                 # Install needed spyder-kernels version
@@ -1125,7 +1129,7 @@ class SpyderEnvManagerWidget(PluginMainWidget):
                 request, self._after_package_changed, server_id
             )
         elif action == SpyderEnvManagerWidgetActions.DeleteEnvironment:
-            self.list_envs_widget.set_enabled(False)
+            self.list_envs_widget.set_enabled(False, server_id)
 
             request = ManagerRequest(
                 manager_options=ManagerOptions(
