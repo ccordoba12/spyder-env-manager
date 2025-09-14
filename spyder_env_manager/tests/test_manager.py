@@ -9,11 +9,11 @@ Spyder Env Manager main widget tests.
 """
 # Local imports
 from spyder_env_manager.spyder.config import CONF_DEFAULTS, CONF_SECTION
-from spyder_env_manager.spyder.widgets.main_widget import SpyderEnvManagerWidget
+from spyder_env_manager.spyder.widgets.manager import SpyderEnvManagerWidget
 from spyder_env_manager.spyder.workers import EnvironmentManagerWorker
 
 
-def test_main_widget(qtbot, tmp_path, monkeypatch):
+def test_manager(qtbot, tmp_path, monkeypatch):
     """Create widget and show it."""
     backends_root_path = tmp_path / "backends"
     backends_root_path.mkdir(parents=True)
@@ -32,6 +32,5 @@ def test_main_widget(qtbot, tmp_path, monkeypatch):
     monkeypatch.setattr(EnvironmentManagerWorker, "get_conf", get_conf)
 
     SpyderEnvManagerWidget.CONF_SECTION = CONF_SECTION
-    widget = SpyderEnvManagerWidget(None, None)
-    widget.setup()
+    widget = SpyderEnvManagerWidget(CONF_SECTION, None)
     widget.show()

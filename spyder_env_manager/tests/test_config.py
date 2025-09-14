@@ -16,7 +16,7 @@ from spyder.plugins.preferences.widgets.configdialog import ConfigDialog
 
 # Local imports
 from spyder_env_manager.spyder.confpage import SpyderEnvManagerConfigPage
-from spyder_env_manager.tests.test_plugin import spyder_env_manager_conf
+from spyder_env_manager.tests.test_dialog import spyder_env_manager_conf
 
 
 def test_config(spyder_env_manager_conf, qtbot):

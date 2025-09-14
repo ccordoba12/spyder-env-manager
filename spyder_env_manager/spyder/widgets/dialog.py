@@ -6,6 +6,8 @@
 # Licensed under the terms of the MIT license
 # -----------------------------------------------------------------------------
 
+# Standard library imports
+from __future__ import annotations
 
 # Third-party imports
 from qtpy.QtGui import QIcon

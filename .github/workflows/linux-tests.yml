@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        PYTHON_VERSION: ['3.9', '3.11']
+        PYTHON_VERSION: ['3.9', '3.12']
         USE_CONDA: ['True', 'False']
     timeout-minutes: 15
     steps:
