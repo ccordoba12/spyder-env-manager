@@ -225,7 +225,8 @@ def test_environment_creation_and_deletion(env_manager_dialog, qtbot, caplog):
     # Check we're displaying the new env
     len(manager.list_envs_widget._table.elements) == 1
     env_element = manager.list_envs_widget._table.elements[0]
-    assert env_element["title"] == "default"
+    assert "default" in env_element["title"]
+    assert "Python 3.12" in env_element["title"]
     assert "pixi/envs/default" in env_element["description"]
 
     # Edit env to check its contents
@@ -349,7 +350,8 @@ def test_environment_import(env_manager_dialog, qtbot, caplog):
     # Check we're displaying the new env
     len(manager.list_envs_widget._table.elements) == 1
     env_element = manager.list_envs_widget._table.elements[0]
-    assert env_element["title"] == "pixi_export_env"
+    assert "pixi_export_env" in env_element["title"]
+    assert "Python 3.10.5" in env_element["title"]
     assert "pixi/envs/pixi_export_env" in env_element["description"]
 
     # Edit env to check its contents

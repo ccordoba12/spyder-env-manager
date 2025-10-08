@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        PYTHON_VERSION: ['3.9', '3.12']
+        PYTHON_VERSION: ['3.10', '3.12']
         USE_CONDA: ['True', 'False']
     timeout-minutes: 15
     steps:
@@ -49,12 +49,11 @@ jobs:
       - name: Install package and test dependencies with pip
         if: ${{ startsWith(matrix.USE_CONDA, 'False') }}
         shell: bash -el {0}
-        run: pip install --pre -e .[test]
-      - name: Install Spyder from master branch (Future Spyder 6.1)
+        run: pip install -e .[test]
+      - name: Install Spyder from 6.x branch (Future Spyder 6.1.1)
         shell: bash -el {0}
         run: |
-            pip install --no-deps git+https://github.com/spyder-ide/spyder.git@master
-            pip install --no-deps git+https://github.com/spyder-ide/spyder-kernels.git@master
+            pip install --no-deps git+https://github.com/spyder-ide/spyder.git@6.x
       - name: Install envs-manager from its subrepo
         shell: bash -el {0}
         run: |

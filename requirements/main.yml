@@ -9,4 +9,4 @@ dependencies:
   - qtawesome
   - qtpy
   - setuptools
-  - spyder >=6.1.0a1
+  - spyder >=6.1.0
