@@ -67,7 +67,8 @@ class VEnvInterface(BackendInstance):
                     packages.remove(possible_python)
                 if len(packages) > 0:
                     return self.install_packages(packages=packages)
-                return BackendActionResult(status=True, output=None)
+
+            return BackendActionResult(status=True, output=None)
         except Exception as error:
             return BackendActionResult(status=False, output=str(error))
 

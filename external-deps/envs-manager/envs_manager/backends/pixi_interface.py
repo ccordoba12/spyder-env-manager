@@ -16,33 +16,55 @@ import requests
 
 from envs_manager.backends.api import BackendInstance, BackendActionResult, run_command
 
+try:
+    import tomllib  # Python 3.11+
+except ImportError:
+    import tomli as tomllib
+
 
 logger = logging.getLogger("envs-manager")
+
+
+def pyexec_from_pixi_env_path(path: Path) -> str:
+    """Return path to the Python executable given a Pixi environment path."""
+    pixi_env_dir = Path() / ".pixi" / "envs" / "default"
+
+    if os.name == "nt":
+        python_executable_path = path / pixi_env_dir / "python.exe"
+    else:
+        python_executable_path = path / pixi_env_dir / "bin" / "python"
+
+    return str(python_executable_path)
+
+
+def get_python_version_from_toml_file(path: Path) -> str:
+    """Get Python version from a given Pixi toml file."""
+    with open(path, "rb") as f:
+        pixi_toml = tomllib.load(f)
+
+    python_version = None
+    try:
+        python_version = pixi_toml["dependencies"]["python"].split(".*")[0]
+    except KeyError:
+        pass
+
+    return python_version
 
 
 class PixiInterface(BackendInstance):
     ID = "pixi"
 
-    def __init__(self, environment_path, envs_directory, bin_directory):
-        super().__init__(environment_path, envs_directory, bin_directory)
+    def __init__(self, environment_path, envs_directory, bin_directory, python_version):
+        super().__init__(
+            environment_path, envs_directory, bin_directory, python_version
+        )
 
         # We use this to save the Pixi packages cache directory
         self._cache_dir = None
 
     @property
     def python_executable_path(self):
-        pixi_env_dir = Path() / ".pixi" / "envs" / "default"
-
-        if os.name == "nt":
-            python_executable_path = (
-                Path(self.environment_path) / pixi_env_dir / "python.exe"
-            )
-        else:
-            python_executable_path = (
-                Path(self.environment_path) / pixi_env_dir / "bin" / "python"
-            )
-
-        return str(python_executable_path)
+        return pyexec_from_pixi_env_path(Path(self.environment_path))
 
     def validate(self):
         self.external_executable = self.find_backend_executable(exec_name="pixi")
@@ -144,25 +166,30 @@ class PixiInterface(BackendInstance):
             logger.error(error, exc_info=True)
             return BackendActionResult(status=False, output=str(error))
 
+        command = [
+            self.external_executable,
+            "add",
+            f"python={self.python_version}" if self.python_version else "python",
+        ]
         if packages:
             if not isinstance(packages, list):
                 packages = [packages]
+            command = command + packages
 
-            command = [self.external_executable, "add"] + packages
-            try:
-                result = run_command(
-                    command, capture_output=True, cwd=self.environment_path
-                )
-                output = (result.stdout or result.stderr).strip()
-                logger.info(output)
-                return BackendActionResult(status=True, output=output)
-            except subprocess.CalledProcessError as error:
-                error_text = error.stderr.strip()
-                logger.error(error_text)
-                return BackendActionResult(status=False, output=error_text)
-            except Exception as error:
-                logger.error(error, exc_info=True)
-                return BackendActionResult(status=False, output=str(error))
+        try:
+            result = run_command(
+                command, capture_output=True, cwd=self.environment_path
+            )
+            output = (result.stdout or result.stderr).strip()
+            logger.info(output)
+            return BackendActionResult(status=True, output=output)
+        except subprocess.CalledProcessError as error:
+            error_text = error.stderr.strip()
+            logger.error(error_text)
+            return BackendActionResult(status=False, output=error_text)
+        except Exception as error:
+            logger.error(error, exc_info=True)
+            return BackendActionResult(status=False, output=str(error))
 
     def delete_environment(self, force=False):
         # There is no command in Pixi to remove an env, so we rely on the OS
@@ -458,11 +485,27 @@ class PixiInterface(BackendInstance):
 
         logger.info(f"# {self.ID} environments")
         for env_dir_path in Path(self.envs_directory).iterdir():
-            environments[env_dir_path.name] = str(env_dir_path)
+            # Get Python version
+            pixi_toml_path = env_dir_path / "pixi.toml"
+            python_version = get_python_version_from_toml_file(pixi_toml_path)
+
+            # If the env doesn't have Python, we can't use it.
+            if python_version is None:
+                continue
+
+            # Add env info to dict
+            environments[env_dir_path.name] = (
+                str(env_dir_path),
+                f"Python {python_version}",
+            )
+
+            # Output printed to the console
             logger.info(f"{env_dir_path.name} - {str(env_dir_path)}")
 
         return BackendActionResult(status=True, output=environments)
 
+    # ---- Private API
+    # ----------------------------------------------------------------------------------
     def _get_package_info(self, package_dir):
         """
         Get package information from the Pixi packages cache.

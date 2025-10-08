@@ -171,7 +171,7 @@ def main(args=None):
         )
         if options.command == "create":
             manager.create_environment(
-                packages=options.packages or ["python"], channels=options.channels
+                packages=options.packages, channels=options.channels
             )
         elif options.command == "delete":
             manager.delete_environment()

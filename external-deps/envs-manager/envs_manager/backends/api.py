@@ -108,12 +108,16 @@ class BackendInstance:
         environment_path: str,
         envs_directory: str,
         bin_directory: str,
+        python_version: str | None,
     ):
         self.environment_path = environment_path
         self.envs_directory = envs_directory
         self.bin_directory = bin_directory
+        self.python_version = python_version
+
         self.external_executable = None
         self.executable_variant = None
+
         assert self.validate(), f"{self.ID} backend unavailable!"
 
     @property

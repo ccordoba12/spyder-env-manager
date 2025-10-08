@@ -33,8 +33,10 @@ logger = logging.getLogger("envs-manager")
 class CondaLikeInterface(BackendInstance):
     ID = "conda-like"
 
-    def __init__(self, environment_path, envs_directory, bin_directory):
-        super().__init__(environment_path, envs_directory, bin_directory)
+    def __init__(self, environment_path, envs_directory, bin_directory, python_version):
+        super().__init__(
+            environment_path, envs_directory, bin_directory, python_version
+        )
 
         # This is needed for Micromamba
         os.environ["MAMBA_ROOT_PREFIX"] = str(Path(self.envs_directory).parent)
@@ -149,7 +151,13 @@ class CondaLikeInterface(BackendInstance):
             pass
 
     def create_environment(self, packages=None, channels=None, force=False):
-        command = [self.external_executable, "create", "-p", self.environment_path]
+        command = [
+            self.external_executable,
+            "create",
+            "-p",
+            self.environment_path,
+            f"python={self.python_version}" if self.python_version else "python",
+        ]
 
         packages = [] if packages is None else packages
         if packages:

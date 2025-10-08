@@ -58,6 +58,9 @@ class ManagerOptions(TypedDict):
     env_directory: str | None
     """Path to the environment's directory."""
 
+    python_version: str | None
+    """Python version for the environment."""
+
 
 class ManagerActionResult(BackendActionResult):
     """Dictionary to report the result of a manager's action."""
@@ -83,6 +86,7 @@ class Manager:
         root_path: str | Path | None = None,
         env_name: str | None = None,
         env_directory: str | Path | None = None,
+        python_version: str | None = None,
     ):
         self.backend_class = self.BACKENDS[backend]
         self.env_name = env_name
@@ -110,6 +114,7 @@ class Manager:
             str(self.env_directory),
             str(backend_envs_directory),
             str(bin_directory),
+            python_version,
         )
 
         self._manager_options = ManagerOptions(
@@ -117,6 +122,7 @@ class Manager:
             root_path=str(root_path),
             env_name=env_name,
             env_directory=str(self.env_directory),
+            python_version=python_version,
         )
 
     def run_action(self, action: ManagerActions, action_options: dict | None = None):

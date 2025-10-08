@@ -251,6 +251,7 @@ def manager_instance(request, tmp_path):
         root_path=root_path,
         env_name=env_name,
         env_directory=env_directory,
+        python_version="3.10",
     )
     yield manager_instance
 
@@ -270,9 +271,7 @@ def manager_instance(request, tmp_path):
 def test_manager_backends_python_executable(manager_instance, capsys):
     # Create an environment with Python in it
     with capsys.disabled():
-        create_result = manager_instance.create_environment(
-            packages=["python==3.10"], force=True
-        )
+        create_result = manager_instance.create_environment(force=True)
     print(create_result["output"])
     assert create_result["status"]
 
@@ -302,9 +301,7 @@ def test_manager_backends(
 ):
     # Create an environment with Python in it
     with capsys.disabled():
-        create_result = manager_instance.create_environment(
-            packages=["python==3.10"], force=True
-        )
+        create_result = manager_instance.create_environment(force=True)
     assert create_result["status"]
 
     # List packages and check correct list result dimensions

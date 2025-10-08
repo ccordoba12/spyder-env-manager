@@ -28,6 +28,7 @@ dependencies = [
   "py-rattler",
   "pyyaml",
   "requests",
+  "tomli; python_version < '3.11'",
 ]
 dynamic = ["version"]
 
@@ -86,7 +87,6 @@ exclude_lines = [
 ]
 
 [tool.black]
-py36 = true
 include = '\.pyi?$'
 exclude = '''
 /(
