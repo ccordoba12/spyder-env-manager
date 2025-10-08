@@ -84,7 +84,7 @@ class SpyderEnvManager(SpyderPluginV2):
 
     @staticmethod
     def get_description():
-        return _("Spyder 6+ plugin to manage Python virtual environments and packages")
+        return _("Manage Python environments and their packages")
 
     @staticmethod
     def get_icon():
