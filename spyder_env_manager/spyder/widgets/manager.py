@@ -14,10 +14,15 @@ Environment manager widget.
 from __future__ import annotations
 from collections.abc import Callable
 import os
+from pathlib import Path
+import zipfile
 
 # Third party imports
 from envs_manager.api import ManagerActions, ManagerOptions
-from envs_manager.backends.pixi_interface import PixiInterface
+from envs_manager.backends.pixi_interface import (
+    PixiInterface,
+    get_python_version_from_toml_file,
+)
 from envs_manager.manager import Manager
 from packaging.version import parse
 import qstylizer.style
@@ -45,6 +50,7 @@ from spyder.dependencies import SPYDER_KERNELS_REQVER
 from spyder.utils.icon_manager import ima
 from spyder.utils.misc import getcwd_or_home
 from spyder.utils.palette import SpyderPalette
+from spyder.utils.programs import get_temp_dir
 from spyder.utils.stylesheet import PANES_TOOLBAR_STYLESHEET
 
 # Local imports
@@ -573,7 +579,10 @@ class SpyderEnvManagerWidget(PluginMainWidget):
         if action_result:
             env_name = manager_options["env_name"]
             env_directory = manager_options["env_directory"]
-            self.list_envs_widget.add_environment(env_name, env_directory, server_id)
+            python_version = manager_options["python_version"]
+            self.list_envs_widget.add_environment(
+                env_name, env_directory, python_version, server_id
+            )
 
             if server_id is None:
                 self.current_environment_changed(env_name, env_directory)
@@ -1063,7 +1072,6 @@ class SpyderEnvManagerWidget(PluginMainWidget):
         backend = PixiInterface.ID
         if action == SpyderEnvManagerWidgetActions.NewEnvironment:
             packages = [
-                f"python={python_version}",
                 f"spyder-kernels{SPYDER_KERNELS_VERSION}",
             ] + ([] if packages is None else packages)
 
@@ -1071,6 +1079,7 @@ class SpyderEnvManagerWidget(PluginMainWidget):
                 manager_options=ManagerOptions(
                     backend=backend,
                     env_name=env_name,
+                    python_version=python_version,
                 ),
                 action=ManagerActions.CreateEnvironment,
                 action_options=dict(
@@ -1088,10 +1097,37 @@ class SpyderEnvManagerWidget(PluginMainWidget):
                 request, self._add_new_environment_entry, server_id
             )
         elif action == SpyderEnvManagerWidgetActions.ImportEnvironment:
+            try:
+                with zipfile.ZipFile(import_file_path, "r") as zf:
+                    zf.extract("pixi.toml", path=get_temp_dir())
+            except Exception as error:
+                QMessageBox.critical(
+                    self,
+                    _("Error"),
+                    _(
+                        "There was an error while checking the environment file you "
+                        "provided. The error was:<br><br>{}"
+                    ).format(str(error)),
+                )
+
+            python_version = get_python_version_from_toml_file(
+                Path(get_temp_dir()) / "pixi.toml"
+            )
+            if python_version is None:
+                QMessageBox.critical(
+                    self,
+                    _("Error"),
+                    _(
+                        "The environment you want to import doesn't contain Python, "
+                        "so it can't be used Spyder."
+                    ),
+                )
+
             request = ManagerRequest(
                 manager_options=ManagerOptions(
                     backend=backend,
                     env_name=env_name,
+                    python_version=python_version,
                 ),
                 action=ManagerActions.ImportEnvironment,
                 action_options=dict(

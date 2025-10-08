@@ -42,9 +42,10 @@ class EnvironmentsTable(ElementsTable, SpyderWidgetMixin):
 
     # ---- Public API
     # -------------------------------------------------------------------------
-    def setup_envs(self, envs: dict[str, str], enabled: bool = True):
+    def setup_envs(self, envs: dict[str, (str, str)], enabled: bool = True):
         elements = []
-        for env_name, env_directory in envs.items():
+
+        for env_name, (env_directory, python_version) in envs.items():
 
             # Buttons associated to the element
             button_delete = self.create_toolbutton(
@@ -94,7 +95,7 @@ class EnvironmentsTable(ElementsTable, SpyderWidgetMixin):
 
             # Create element
             element = Element(
-                title=env_name,
+                title=f"{env_name} &nbsp;&nbsp;&mdash;&nbsp;&nbsp; {python_version}",
                 description=f"{env_directory}",
                 icon=ima.icon("python"),
                 widget=widget,
@@ -124,8 +125,8 @@ class ListEnvironments(QWidget, SpyderFontsMixin):
         super().__init__(parent)
 
         # To hold a reference to the available envs. The mapping is
-        # server_id: env_name -> env_directory
-        self._envs: dict[str | None, dict[str, str]] = {}
+        # server_id: env_name -> (env_directory, py_version)
+        self._envs: dict[str | None, dict[str, (str, str)]] = {}
 
         title_font = self.get_font(SpyderFontType.Interface)
         title_font.setPointSize(title_font.pointSize() + 2)
@@ -160,24 +161,30 @@ class ListEnvironments(QWidget, SpyderFontsMixin):
 
     # ---- Public API
     # ----------------------------------------------------------------------------------
-    def setup_environments(self, envs: dict[str, str], server_id: str | None):
+    def setup_environments(self, envs: dict[str, (str, str)], server_id: str | None):
         if not self._envs.get(server_id):
             self._envs[server_id] = {}
 
         self._envs[server_id] = envs
         self._table.setup_envs(envs)
 
-    def get_environments(self, server_id: str | None = None):
+    def get_environments(self, server_id: str | None = None) -> dict[str, (str, str)]:
         if not self._envs.get(server_id):
             self._envs[server_id] = {}
 
         return self._envs[server_id]
 
-    def add_environment(self, env_name: str, env_directory: str, server_id: str | None):
+    def add_environment(
+        self,
+        env_name: str,
+        env_directory: str,
+        python_version: str,
+        server_id: str | None,
+    ):
         if not self._envs.get(server_id, None):
             self._envs[server_id] = {}
 
-        self._envs[server_id][env_name] = env_directory
+        self._envs[server_id][env_name] = (env_directory, f"Python {python_version}")
         self._table.setup_envs(self._envs[server_id])
 
     def delete_environment(self, env_name: str, server_id: str | None = None):
