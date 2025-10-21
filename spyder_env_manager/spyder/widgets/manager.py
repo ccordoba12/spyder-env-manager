@@ -12,6 +12,7 @@ Environment manager widget.
 
 # Standard library imports
 from __future__ import annotations
+import base64
 from collections.abc import Callable
 import os
 from pathlib import Path
@@ -1123,6 +1124,15 @@ class SpyderEnvManagerWidget(PluginMainWidget):
                     ),
                 )
 
+            if server_id is not None:
+                # Get binary file contents
+                with open(import_file_path, "rb") as file:
+                    import_file_contents = file.read()
+
+                # Json can't serialize bytes, so we need to send a base64 encoded
+                # string
+                encoded_string = base64.b64encode(import_file_contents).decode("utf-8")
+
             request = ManagerRequest(
                 manager_options=ManagerOptions(
                     backend=backend,
@@ -1131,7 +1141,9 @@ class SpyderEnvManagerWidget(PluginMainWidget):
                 ),
                 action=ManagerActions.ImportEnvironment,
                 action_options=dict(
-                    import_file_path=import_file_path,
+                    import_file_path=(
+                        import_file_path if server_id is None else encoded_string
+                    ),
                     force=True,
                 ),
             )

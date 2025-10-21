@@ -9,7 +9,6 @@ Spyder Env Manager Plugin.
 """
 
 # Third-party imports
-import base64
 from functools import cached_property
 import qtawesome as qta
 from qtpy.QtCore import Signal
@@ -173,18 +172,11 @@ class SpyderEnvManager(SpyderPluginV2):
         )
 
     def import_remote_env(self, server_id: str, import_file_path: str, env_name: str):
-        # Get binary file contents
-        with open(import_file_path, "rb") as file:
-            import_file_contents = file.read()
-
-        # Json can't serialize bytes, so we need to send a base64 encoded string
-        encoded_string = base64.b64encode(import_file_contents).decode("utf-8")
-
         # Send request
         container = self.get_container()
         container.envs_manager._run_action_for_env(
             action=SpyderEnvManagerWidgetActions.ImportEnvironment,
-            import_file_path=encoded_string,
+            import_file_path=import_file_path,
             env_name=env_name,
             server_id=server_id,
         )
