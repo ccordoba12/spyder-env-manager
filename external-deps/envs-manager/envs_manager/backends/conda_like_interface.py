@@ -78,7 +78,7 @@ class CondaLikeInterface(BackendInstance):
                         return False
                 return True
             except Exception as error:
-                logger.error(error.stderr)
+                logger.info(error.stderr)
 
         return False
 
@@ -222,7 +222,7 @@ class CondaLikeInterface(BackendInstance):
             logger.info(result.stdout)
             return BackendActionResult(status=True, output=result.stdout)
         except subprocess.CalledProcessError as error:
-            logger.error(error.stderr)
+            logger.info(error.stderr)
             return BackendActionResult(status=False, output=error.stderr)
         except Exception as error:
             return BackendActionResult(status=False, output=str(error))
@@ -254,7 +254,7 @@ class CondaLikeInterface(BackendInstance):
             logger.info(result.stdout)
             return BackendActionResult(status=True, output=result.stdout)
         except subprocess.CalledProcessError as error:
-            logger.error(error.stderr)
+            logger.info(error.stderr)
             return BackendActionResult(
                 status=False,
                 output=(
@@ -295,7 +295,7 @@ class CondaLikeInterface(BackendInstance):
                 status=True, output=result.stdout or result.stderr
             )
         except subprocess.CalledProcessError as error:
-            logger.error(error.stderr)
+            logger.info(error.stderr)
             return BackendActionResult(status=False, output=error.stderr)
         except Exception as error:
             return BackendActionResult(status=False, output=str(error))
@@ -319,7 +319,7 @@ class CondaLikeInterface(BackendInstance):
         except subprocess.CalledProcessError as error:
             if "PackagesNotFoundError" in error.stderr:
                 return BackendActionResult(status=True, output=error.stderr)
-            logger.error(error.stderr)
+            logger.info(error.stderr)
             return BackendActionResult(status=False, output=error.stderr)
         except Exception as error:
             return BackendActionResult(status=False, output=str(error))
@@ -344,7 +344,7 @@ class CondaLikeInterface(BackendInstance):
             else:
                 return BackendActionResult(status=True, output=result.stdout)
         except subprocess.CalledProcessError as error:
-            logger.error(error.stderr)
+            logger.info(error.stderr)
             return BackendActionResult(status=False, output=error.stderr)
         except Exception as error:
             return BackendActionResult(status=False, output=str(error))
@@ -428,7 +428,7 @@ class CondaLikeInterface(BackendInstance):
 
             return BackendActionResult(status=True, output=environments)
         except subprocess.CalledProcessError as error:
-            logger.error(error.stderr)
+            logger.info(error.stderr)
             return BackendActionResult(status=False, output=error.stderr)
         except Exception as error:
             return BackendActionResult(status=False, output=str(error))

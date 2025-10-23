@@ -7,6 +7,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import zipfile
 
@@ -81,9 +82,9 @@ class PixiInterface(BackendInstance):
                 if parse(version) >= parse("0.47.0"):
                     return True
             except subprocess.CalledProcessError as error:
-                logger.error(error.stderr.strip())
+                logger.info(error.stderr.strip())
             except Exception as error:
-                logger.error(error, exc_info=True)
+                logger.info(error, exc_info=True)
 
         return False
 
@@ -120,10 +121,10 @@ class PixiInterface(BackendInstance):
                 cwd=self.bin_directory,
             )
         except subprocess.CalledProcessError as error:
-            logger.error(error.stderr.strip())
+            logger.info(error.stderr.strip())
             return
         except Exception as error:
-            logger.error(error, exc_info=True)
+            logger.info(error, exc_info=True)
             return
 
         # Cleanup
@@ -160,11 +161,19 @@ class PixiInterface(BackendInstance):
             logger.info(output.strip())
         except subprocess.CalledProcessError as error:
             error_text = error.stderr.strip()
-            logger.error(error_text)
-            return BackendActionResult(status=False, output=error_text)
+            logger.info(error_text)
+            remove_path_error = self._remove_environment_path()
+            return BackendActionResult(
+                status=False,
+                output=remove_path_error if remove_path_error else error_text,
+            )
         except Exception as error:
-            logger.error(error, exc_info=True)
-            return BackendActionResult(status=False, output=str(error))
+            logger.info(error, exc_info=True)
+            remove_path_error = self._remove_environment_path()
+            return BackendActionResult(
+                status=False,
+                output=remove_path_error if remove_path_error else str(error),
+            )
 
         command = [
             self.external_executable,
@@ -185,33 +194,27 @@ class PixiInterface(BackendInstance):
             return BackendActionResult(status=True, output=output)
         except subprocess.CalledProcessError as error:
             error_text = error.stderr.strip()
-            logger.error(error_text)
-            return BackendActionResult(status=False, output=error_text)
+            logger.info(error_text)
+            remove_path_error = self._remove_environment_path()
+            return BackendActionResult(
+                status=False,
+                output=remove_path_error if remove_path_error else error_text,
+            )
         except Exception as error:
-            logger.error(error, exc_info=True)
-            return BackendActionResult(status=False, output=str(error))
+            logger.info(error, exc_info=True)
+            remove_path_error = self._remove_environment_path()
+            return BackendActionResult(
+                status=False,
+                output=remove_path_error if remove_path_error else str(error),
+            )
 
     def delete_environment(self, force=False):
-        # There is no command in Pixi to remove an env, so we rely on the OS
-        # for that.
-        # TODO: Add validation on Windows when the env is in use
-        command = [
-            "rmdir" if os.name == "nt" else "rm",
-            "/S" if os.name == "nt" else "-r",  # Remove all files and subdirs
-            "/Q" if os.name == "nt" else "-f",  # Don't ask
-            self.environment_path,
-        ]
-
         try:
-            result = run_command(command, capture_output=True)
+            shutil.rmtree(self.environment_path, ignore_errors=False)
             logger.info(f"Deleting environment located at {self.environment_path}")
-            return BackendActionResult(status=True, output=result.stdout)
-        except subprocess.CalledProcessError as error:
-            error_text = error.stderr.strip()
-            logger.error(error_text)
-            return BackendActionResult(status=False, output=error_text)
+            return BackendActionResult(status=True, output="")
         except Exception as error:
-            logger.error(error, exc_info=True)
+            logger.info(error, exc_info=True)
             return BackendActionResult(status=False, output=str(error))
 
     def export_environment(self, export_file_path=None):
@@ -244,7 +247,7 @@ class PixiInterface(BackendInstance):
 
             return BackendActionResult(status=True, output=zip_content)
         except Exception as error:
-            logger.error(error, exc_info=True)
+            logger.info(error, exc_info=True)
             return BackendActionResult(status=False, output=str(error))
 
     def import_environment(self, import_file_path, force=False):
@@ -291,7 +294,7 @@ class PixiInterface(BackendInstance):
             with zipfile.ZipFile(import_file_path, "r") as zf:
                 zf.extractall(path=str(env_path))
         except Exception as error:
-            logger.error(error, exc_info=True)
+            logger.info(error, exc_info=True)
 
             if remove_import_file:
                 try:
@@ -323,10 +326,10 @@ class PixiInterface(BackendInstance):
             return BackendActionResult(status=True, output=output)
         except subprocess.CalledProcessError as error:
             error_text = error.stderr.strip()
-            logger.error(error_text)
+            logger.info(error_text)
             return BackendActionResult(status=False, output=error_text)
         except Exception as error:
-            logger.error(error, exc_info=True)
+            logger.info(error, exc_info=True)
             return BackendActionResult(status=False, output=str(error))
 
     def install_packages(
@@ -354,10 +357,10 @@ class PixiInterface(BackendInstance):
                 logger.info((result.stdout or result.stderr).strip())
             except subprocess.CalledProcessError as error:
                 error_text = error.stderr.strip()
-                logger.error(error_text)
+                logger.info(error_text)
                 return BackendActionResult(status=False, output=error_text)
             except Exception as error:
-                logger.error(error, exc_info=True)
+                logger.info(error, exc_info=True)
                 return BackendActionResult(status=False, output=str(error))
 
         # Add packages
@@ -376,10 +379,10 @@ class PixiInterface(BackendInstance):
             return BackendActionResult(status=True, output=output if output else "")
         except subprocess.CalledProcessError as error:
             error_text = error.stderr.strip()
-            logger.error(error_text)
+            logger.info(error_text)
             return BackendActionResult(status=False, output=error_text)
         except Exception as error:
-            logger.error(error, exc_info=True)
+            logger.info(error, exc_info=True)
             return BackendActionResult(status=False, output=str(error))
 
     def uninstall_packages(self, packages, force=False, capture_output=False):
@@ -398,10 +401,10 @@ class PixiInterface(BackendInstance):
             return BackendActionResult(status=True, output=output if output else "")
         except subprocess.CalledProcessError as error:
             error_text = error.stderr.strip()
-            logger.error(error_text)
+            logger.info(error_text)
             return BackendActionResult(status=False, output=error_text)
         except Exception as error:
-            logger.error(error, exc_info=True)
+            logger.info(error, exc_info=True)
             return BackendActionResult(status=False, output=str(error))
 
     def update_packages(self, packages, force=False, capture_output=False):
@@ -421,10 +424,10 @@ class PixiInterface(BackendInstance):
                 return BackendActionResult(status=True, output="")
         except subprocess.CalledProcessError as error:
             error_text = error.stderr.strip()
-            logger.error(error_text)
+            logger.info(error_text)
             return BackendActionResult(status=False, output=error_text)
         except Exception as error:
-            logger.error(error, exc_info=True)
+            logger.info(error, exc_info=True)
             return BackendActionResult(status=False, output=str(error))
 
     def list_packages(self):
@@ -528,7 +531,7 @@ class PixiInterface(BackendInstance):
                 result = run_command(command, capture_output=True)
                 self._cache_dir = json.loads(result.stdout).get("cache_dir")
             except subprocess.CalledProcessError as error:
-                logger.error(error, exc_info=True)
+                logger.info(error, exc_info=True)
                 return
 
         if self._cache_dir is not None:
@@ -536,3 +539,10 @@ class PixiInterface(BackendInstance):
             info = AboutJson.from_package_directory(str(absolute_package_dir))
 
         return info
+
+    def _remove_environment_path(self):
+        try:
+            shutil.rmtree(self.environment_path, ignore_errors=False)
+        except Exception as error:
+            logger.info(error, exc_info=True)
+            return str(error)

@@ -37,6 +37,7 @@ class EnvManagerHandler(JupyterHandler):
             root_path=self.settings["envs_manager_config"]["root_path"],
             env_name=self.get_argument("env_name", None),
             env_directory=self.get_argument("env_directory", None),
+            python_version=self.get_argument("python_version", None),
         )
 
     def get_options(self) -> dict[str, t.Any]:
